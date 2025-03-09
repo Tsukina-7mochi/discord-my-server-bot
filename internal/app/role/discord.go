@@ -130,7 +130,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			return
 		}
 
-		h.logger.Infof("Role removed <@%s>(%s) to <@&%s>(%s)", user.ID, user.Username, role.ID, role.Name)
+		h.logger.Infof("Role removed <@%s>(%s) from <@&%s>(%s)", user.ID, user.Username, role.ID, role.Name)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
