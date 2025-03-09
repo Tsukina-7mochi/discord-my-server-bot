@@ -99,6 +99,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			if err != nil {
 				h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			}
+			return
 		}
 
 		h.logger.Infof("Role assigned %s to %s", i.Member.User.Username, role.Name)
@@ -125,6 +126,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			if err != nil {
 				h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			}
+			return
 		}
 
 		h.logger.Infof("Role removed %s to %s", i.Member.User.Username, role.Name)
