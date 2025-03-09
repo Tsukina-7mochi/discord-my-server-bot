@@ -28,5 +28,5 @@ services:
     image: ghcr.io/tsukina-7mochi/discord-my-server-bot:latest
     volumes:
       - type: bind
-        source: ./
-        target: /bot-app/
+        source: ./.env
+        target: /app/.env
