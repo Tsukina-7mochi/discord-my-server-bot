@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"mochi-bot/internal/app/dice"
 	"mochi-bot/internal/pkg/config"
 	"os"
 	"os/signal"
@@ -9,6 +10,38 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
+
+type CommandHandler interface {
+	SubscribingToCommand(string) bool
+	NewCommand() discordgo.ApplicationCommand
+	HandleCommand(s *discordgo.Session, i *discordgo.InteractionCreate)
+}
+
+func createCommands(session *discordgo.Session, appID string, guildID string, handlers []CommandHandler) error {
+	commands := make([]*discordgo.ApplicationCommand, 0, len(handlers))
+	for _, handler := range handlers {
+		command := handler.NewCommand()
+		commands = append(commands, &command)
+	}
+	_, err := session.ApplicationCommandBulkOverwrite(appID, guildID, commands)
+	return err
+}
+
+func deleteAllCommands(session *discordgo.Session, appID string, guildID string) error {
+	commands, err := session.ApplicationCommands(appID, guildID)
+	if err != nil {
+		return err
+	}
+
+	for _, command := range commands {
+		err = session.ApplicationCommandDelete(appID, guildID, command.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func main() {
 	// ignore error due to .env file not being present
@@ -24,8 +57,40 @@ func main() {
 		log.Fatalf("Failed to create session: %v", err)
 	}
 
+	commandHandlers := []CommandHandler{
+		dice.NewCommandHandler(),
+	}
+
+	log.Printf("Deleting commands")
+	err = deleteAllCommands(session, config.AppID, config.GuildID)
+	if err != nil {
+		log.Fatalf("Failed to delete commands: %v", err)
+	}
+
+	log.Printf("Creating commands")
+	err = createCommands(session, config.AppID, config.GuildID, commandHandlers)
+	if err != nil {
+		log.Fatalf("Failed to create commands: %v", err)
+	}
+
+	// add a handler to log when the bot is ready
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as %s", r.User.String())
+	})
+
+	// add a handler to respond to command interactions
+	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if i.Type != discordgo.InteractionApplicationCommand {
+			return
+		}
+
+		name := i.ApplicationCommandData().Name
+		for _, handler := range commandHandlers {
+			if handler.SubscribingToCommand(name) {
+				handler.HandleCommand(s, i)
+				return
+			}
+		}
 	})
 
 	err = session.Open()
