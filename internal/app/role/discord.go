@@ -84,10 +84,11 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 	operation := data.Options[0].Name
 
 	subOptions := discordoptions.ParseOptions(data.Options[0].Options)
+	user := i.Member.User
 	role := subOptions["role"].RoleValue(s, i.GuildID)
 
 	if operation == "assign" {
-		err := assignRole(s, i.GuildID, i.Member.User.ID, role.ID)
+		err := assignRole(s, i.GuildID, user.ID, *role)
 		if err != nil {
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -99,9 +100,10 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			if err != nil {
 				h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			}
+			return
 		}
 
-		h.logger.Infof("Role assigned %s to %s", i.Member.User.Username, role.Name)
+		h.logger.Infof("Role assigned <@%s>(%s) to <@&%s>(%s)", user.ID, user.Username, role.ID, role.Name)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -113,7 +115,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 		}
 	} else if operation == "remove" {
-		err := assignRole(s, i.GuildID, i.Member.User.ID, role.ID)
+		err := removeRole(s, i.GuildID, user.ID, *role)
 		if err != nil {
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -125,9 +127,10 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			if err != nil {
 				h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			}
+			return
 		}
 
-		h.logger.Infof("Role removed %s to %s", i.Member.User.Username, role.Name)
+		h.logger.Infof("Role removed <@%s>(%s) from <@&%s>(%s)", user.ID, user.Username, role.ID, role.Name)
 		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
