@@ -88,7 +88,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 	role := subOptions["role"].RoleValue(s, i.GuildID)
 
 	if operation == "assign" {
-		err := assignRole(s, i.GuildID, i.Member.User.ID, *role)
+		err := assignRole(s, i.GuildID, user.ID, *role)
 		if err != nil {
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -115,7 +115,7 @@ func (h RoleCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Int
 			h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 		}
 	} else if operation == "remove" {
-		err := assignRole(s, i.GuildID, user.ID, *role)
+		err := removeRole(s, i.GuildID, user.ID, *role)
 		if err != nil {
 			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
