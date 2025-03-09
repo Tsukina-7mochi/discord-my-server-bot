@@ -2,13 +2,15 @@ package dice
 
 import (
 	"fmt"
-	"log"
+	"mochi-bot/internal/pkg/botlog"
 	"mochi-bot/internal/pkg/discordoptions"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-type DiceCommandHandler struct{}
+type DiceCommandHandler struct {
+	logger *botlog.Logger
+}
 
 var command = discordgo.ApplicationCommand{
 	Name:        "dice",
@@ -23,8 +25,10 @@ var command = discordgo.ApplicationCommand{
 	},
 }
 
-func NewCommandHandler() DiceCommandHandler {
-	return DiceCommandHandler{}
+func NewCommandHandler(logger *botlog.Logger) DiceCommandHandler {
+	return DiceCommandHandler{
+		logger: logger,
+	}
 }
 
 func (DiceCommandHandler) SubscribingToCommand(name string) bool {
@@ -35,21 +39,20 @@ func (DiceCommandHandler) NewCommand() discordgo.ApplicationCommand {
 	return command
 }
 
-func (DiceCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (h DiceCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			log.Printf("Failed to handle command %s: %v", i.ID, rec)
+			h.logger.CommandErrorf(command.Name, "Uncaught error: %v", rec)
 
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Something weng wrong :(",
-					Flags:   1 << 6, // ephemeral
+					Content: "何かしらのエラーが発生しました。",
+					Flags:   discordgo.MessageFlagsEphemeral,
 				},
 			})
 			if err != nil {
-				log.Printf("[Command %s] Failed to respond interaction: %v", i.ID, err)
-				return
+				h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			}
 		}
 	}()
@@ -66,11 +69,11 @@ func (DiceCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Inter
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "ダイスのフォーマットが正しくありません！(例: 2d6)",
-				Flags:   1 << 6, // ephemeral
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 		if err != nil {
-			log.Printf("[Command %s] Failed to respond interaction: %v", i.ID, err)
+			h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 			return
 		}
 	}
@@ -84,8 +87,8 @@ func (DiceCommandHandler) HandleCommand(s *discordgo.Session, i *discordgo.Inter
 		},
 	})
 	if err != nil {
-		log.Printf("[Command %s] Failed to respond interaction: %v", i.ID, err)
+		h.logger.CommandErrorf(command.Name, "Failed to respond to interaction: %v", err)
 	}
 
-	log.Printf("[Dice] Rolled %s → %d", dice, result)
+	h.logger.CommandInfof(command.Name, "Rolled %s → %d", dice, result)
 }
