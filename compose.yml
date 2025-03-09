@@ -1,0 +1,32 @@
+services:
+  dev:
+    build:
+      context: '.'
+      dockerfile: './Dockerfile'
+      target: dev
+    volumes:
+      - type: bind
+        source: ./
+        target: /app/
+    tty: true
+    profiles:
+      - dev
+
+  prod:
+    build:
+      context: '.'
+      dockerfile: './Dockerfile'
+      target: prod
+    volumes:
+      - type: bind
+        source: ./.env
+        target: /app/.env
+    profiles:
+      - dev
+
+  image:
+    image: ghcr.io/tsukina-7mochi/discord-my-server-bot:latest
+    volumes:
+      - type: bind
+        source: ./
+        target: /bot-app/
