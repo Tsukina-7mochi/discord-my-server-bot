@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"mochi-bot/internal/app/dice"
+	"mochi-bot/internal/app/role"
 	"mochi-bot/internal/pkg/botlog"
 	"mochi-bot/internal/pkg/config"
 	"os"
@@ -61,6 +62,7 @@ func main() {
 	logger := botlog.NewLogger(log.Default(), session, config.LogChannelID)
 	commandHandlers := []CommandHandler{
 		dice.NewCommandHandler(logger),
+		role.NewCommandHandler(logger),
 	}
 
 	log.Printf("INFO: Deleting commands")
